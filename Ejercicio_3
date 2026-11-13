@@ -1,0 +1,64 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+class Logger {
+    private static Logger instance = null;
+    private PrintWriter escritor = null;
+    private DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+private Logger() {
+try {
+escritor = new PrintWriter(new FileWriter("app.log", true));
+} catch (IOException e) {
+System.out.println("No se pudo abrir el archivo app.log");
+}
+}
+public static synchronized Logger getInstance() {
+if (instance == null) {
+instance = new Logger();
+}
+return instance;
+}
+private synchronized void registrar(String nivel, String mensaje) {
+String marca = LocalDateTime.now().format(formato);
+String linea = "[" + marca + "] [" + nivel + "] " + mensaje;
+
+System.out.println(linea);
+if (escritor != null) {
+escritor.println(linea);
+escritor.flush();
+}
+}
+public void info(String mensaje) {
+registrar("INFO", mensaje);
+}
+ public void warning(String mensaje) {
+registrar("WARNING", mensaje);
+}
+public void error(String mensaje) {
+registrar("ERROR", mensaje);
+}
+public synchronized void cerrar() {
+  if (escritor != null) {
+escritor.close();
+escritor = null;
+   }
+  }
+}
+public class Main {
+public static void main(String[] args) {
+
+Logger modulo1 = Logger.getInstance();
+modulo1.info("La aplicación se inició");
+
+Logger modulo2 = Logger.getInstance();
+modulo2.warning("Quedan pocos recursos disponibles");
+modulo2.error("No se pudo conectar con el servidor");
+
+System.out.println("¿Son el mismo objeto? " + (modulo1 == modulo2));
+modulo1.cerrar();
+    }
+}
