@@ -1,19 +1,21 @@
-public class ConexionDB {
- private static ConexionDB instance = null;
-  private boolean conectada = false;
- private int operaciones = 0;
+class ConexionBD {
+private static ConexionBD instance = null;
 
- private ConexionDB() {
+private boolean conectada = false;
+private int operaciones = 0;
+
+private ConexionDB() {
 abrir();
 }
- public static ConexionDB getInstance() {
-if (instance == null) {
-instance = new ConexionDb();
+
+public static ConexionDB getInstance() {
+ if (instance == null) {
+instance = new ConexionDB();
 }
 return instance;
 }
 public void abrir() {
-  if (conectada) {
+ if (conectada) {
 System.out.println("La conexión ya estaba abierta.");
 return;
 }
@@ -22,7 +24,7 @@ conectada = true;
 System.out.println("Conexión establecida.");
 }
 public void cerrar() {
-  if (!conectada) {
+ if (!conectada) {
 System.out.println("La conexión ya estaba cerrada.");
 return;
 }
@@ -33,15 +35,15 @@ public boolean estaConectada() {
 return conectada;
 }
 public void consultar(String sql) {
-  if (!conectada) {
+ if (!conectada) {
 System.out.println("Error: no hay conexión abierta.");
 return;
 }
 operaciones++;
 System.out.println("Consulta ejecutada: " + sql);
 }
- public void actualizar(String sql) {
-  if (!conectada) {
+public void actualizar(String sql) {
+ if (!conectada) {
 System.out.println("Error: no hay conexión abierta.");
 return;
 }
@@ -50,5 +52,22 @@ System.out.println("Actualización ejecutada: " + sql);
 }
 public int getOperaciones() {
 return operaciones;
+}
+}
+
+public class Main {
+public static void main(String[] args) {
+ConexionDB modulo1 = ConexionDB.getInstance();
+modulo1.consultar("SELECT * FROM alumnos");
+
+ConexionDB modulo2 = ConexionDB.getInstance();
+modulo2.actualizar("UPDATE alumnos SET nota = 9 WHERE id = 1");
+
+System.out.println("¿Son el mismo objeto? " + (modulo1 == modulo2));
+System.out.println("Operaciones realizadas: " + modulo1.getOperaciones());
+
+modulo1.cerrar();
+System.out.println("¿Conectada (visto desde modulo2)? " + modulo2.estaConectada());
+modulo2.consultar("SELECT * FROM alumnos");
 }
 }
