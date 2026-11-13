@@ -1,0 +1,54 @@
+public class ConexionDB {
+ private static ConexionDB instance = null;
+  private boolean conectada = false;
+ private int operaciones = 0;
+
+ private ConexionDB() {
+abrir();
+}
+ public static ConexionDB getInstance() {
+if (instance == null) {
+instance = new ConexionDb();
+}
+return instance;
+}
+public void abrir() {
+  if (conectada) {
+System.out.println("La conexión ya estaba abierta.");
+return;
+}
+System.out.println("Abriendo conexión a la base de datos...");
+conectada = true;
+System.out.println("Conexión establecida.");
+}
+public void cerrar() {
+  if (!conectada) {
+System.out.println("La conexión ya estaba cerrada.");
+return;
+}
+conectada = false;
+System.out.println("Conexión cerrada.");
+}
+public boolean estaConectada() {
+return conectada;
+}
+public void consultar(String sql) {
+  if (!conectada) {
+System.out.println("Error: no hay conexión abierta.");
+return;
+}
+operaciones++;
+System.out.println("Consulta ejecutada: " + sql);
+}
+ public void actualizar(String sql) {
+  if (!conectada) {
+System.out.println("Error: no hay conexión abierta.");
+return;
+}
+operaciones++;
+System.out.println("Actualización ejecutada: " + sql);
+}
+public int getOperaciones() {
+return operaciones;
+}
+}
