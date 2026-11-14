@@ -1,0 +1,87 @@
+interface PasarelaPago {
+    boolean pagar(String cliente, double monto);
+}
+
+class PasarelaReal implements PasarelaPago {
+private static PasarelaReal instance = null;
+private double totalCobrado = 0;
+private int transacciones = 0;
+
+private PasarelaReal() {
+System.out.println("Creando la pasarela de pago...");
+}
+
+public static synchronized PasarelaReal getInstance() {
+  if (instance == null) {
+instance = new PasarelaReal();
+}
+return instance;
+}
+public synchronized boolean pagar(String cliente, double monto) {
+  if (monto <= 0) {
+System.out.println("Pago rechazado: monto inválido.");
+return false;
+}
+totalCobrado = totalCobrado + monto;
+transacciones++;
+System.out.println("Pago aprobado: " + cliente + " - $" + monto);
+return true;
+}
+public synchronized double getTotalCobrado() {
+return totalCobrado;
+}
+public synchronized int getTransacciones() {
+return transacciones;
+}
+}
+class ServicioPedidos {
+private PasarelaPago pasarela;
+public ServicioPedidos(PasarelaPago pasarela) {
+this.pasarela = pasarela;
+}
+
+public void comprar(String cliente, double monto) {
+System.out.println("Pedido de " + cliente);
+pasarela.pagar(cliente, monto);
+}
+}
+class ServicioSuscripciones {
+private PasarelaPago pasarela;
+
+public ServicioSuscripciones(PasarelaPago pasarela) {
+this.pasarela = pasarela;
+}
+public void renovar(String cliente, double monto) {
+System.out.println("Suscripción de " + cliente);
+pasarela.pagar(cliente, monto);
+}
+}
+
+class PasarelaFalsa implements PasarelaPago {
+
+public boolean pagar(String cliente, double monto) {
+System.out.println("[PRUEBA] Pago simulado de " + cliente + " por " + monto);
+return true;
+}
+}
+
+public class Main {
+    public static void main(String[] args) {
+PasarelaReal pasarela = PasarelaReal.getInstance();
+
+ServicioPedidos pedidos = new ServicioPedidos(pasarela);
+ServicioSuscripciones suscripciones = new ServicioSuscripciones(pasarela);
+
+pedidos.comprar("Agostina", 1500.5);
+suscripciones.renovar("Matias", 300.0);
+pedidos.comprar("Marta", -5.0);
+
+System.out.println("Transacciones aprobadas: " + pasarela.getTransacciones());
+System.out.println("Total cobrado: " + pasarela.getTotalCobrado());
+
+System.out.println("--- Prueba con pasarela falsa ---");
+ServicioPedidos pedidosDePrueba = new ServicioPedidos(new PasarelaFalsa());
+  pedidosDePrueba.comprar("Test", 100.0);
+System.out.println("¿Es la misma pasarela? " + (PasarelaReal.getInstance() == pasarela));
+}
+}
