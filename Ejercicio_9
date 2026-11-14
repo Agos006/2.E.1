@@ -1,0 +1,142 @@
+class Latencia {
+
+private long cantidad = 0;
+private long total = 0;
+private long maximo = 0;
+
+public synchronized void agregar(long ms) {
+cantidad++;
+total = total + ms;
+if (ms > maximo) {
+maximo = ms;
+}
+}
+public synchronized String resumen() {
+double promedio = 0;
+  if (cantidad > 0) {
+promedio = (double) total / cantidad;
+}
+return "cantidad=" + cantidad + ", promedio=" + promedio + " ms, maximo=" + maximo + " ms";
+}
+}
+class MetricsCollector {
+private static final MetricsCollector instance = new MetricsCollector();
+
+private static final int LIMITE_METRICAS = 5;
+
+private ConcurrentHashMap<String, AtomicLong> contadores = new ConcurrentHashMap<>();
+private ConcurrentHashMap<String, Latencia> latencias = new ConcurrentHashMap<>();
+private AtomicLong descartadas = new AtomicLong(0);
+
+private MetricsCollector() {
+}
+public static MetricsCollector getInstance() {
+return instance;
+}
+public void incrementar(String nombre) {
+AtomicLong contador = contadores.get(nombre);
+  if (contador == null) {
+contador = crearContador(nombre);
+}
+  if (contador == null) {
+descartadas.incrementAndGet();
+return;
+}
+contador.incrementAndGet();
+}
+public void registrarLatencia(String nombre, long ms) {
+Latencia latencia = latencias.get(nombre);
+  if (latencia == null) {
+latencia = crearLatencia(nombre);
+}
+  if (latencia == null) {
+descartadas.incrementAndGet();
+return;
+}
+latencia.agregar(ms);
+  }
+private synchronized AtomicLong crearContador(String nombre) {
+AtomicLong existente = contadores.get(nombre);
+  if (existente != null) {
+return existente;
+}
+  if (cantidadMetricas() >= LIMITE_METRICAS) {
+return null;
+}
+AtomicLong nuevo = new AtomicLong(0);
+contadores.put(nombre, nuevo);
+return nuevo;
+}
+private synchronized Latencia crearLatencia(String nombre) {
+Latencia existente = latencias.get(nombre);
+  if (existente != null) {
+return existente;
+}
+  if (cantidadMetricas() >= LIMITE_METRICAS) {
+return null;
+}
+Latencia nueva = new Latencia();
+  latencias.put(nombre, nueva);
+return nueva;
+}
+public String exportar() {
+StringBuilder texto = new StringBuilder();
+texto.append("=== Resumen de métricas ===\n");
+texto.append("Contadores:\n");
+for (Map.Entry<String, AtomicLong> par : new TreeMap<>(contadores).entrySet()) {
+texto.append("  " + par.getKey() + ": " + par.getValue().get() + "\n");
+}
+texto.append("Latencias:\n");
+  for (Map.Entry<String, Latencia> par : new TreeMap<>(latencias).entrySet()) {
+texto.append("  " + par.getKey() + ": " + par.getValue().resumen() + "\n");
+}
+texto.append("Métricas descartadas: " + descartadas.get() + "\n");
+return texto.toString();
+}
+public synchronized void limpiar() {
+contadores.clear();
+latencias.clear();
+descartadas.set(0);
+    }
+public int cantidadMetricas() {
+return contadores.size() + latencias.size();
+}
+public long getDescartadas() {
+return descartadas.get();
+}
+}
+
+class Interceptor extends Thread {
+public void run() {
+for (int i = 0; i < 1000; i++) {
+MetricsCollector.getInstance().incrementar("peticiones_red");
+}
+}
+}
+public class Main {
+public static void main(String[] args) throws InterruptedException {
+MetricsCollector metricas = MetricsCollector.getInstance();
+  metricas.incrementar("peticiones");
+    metricas.incrementar("peticiones");
+      metricas.incrementar("errores");
+metricas.registrarLatencia("consulta", 10);
+  metricas.registrarLatencia("consulta", 30);
+    metricas.registrarLatencia("consulta", 20);
+
+Interceptor i1 = new Interceptor();
+Interceptor i2 = new Interceptor();
+i1.start();
+  i2.start();
+    i1.join();
+      i2.join();
+System.out.print(metricas.exportar());
+metricas.incrementar("memoria");
+  metricas.incrementar("disco");
+metricas.incrementar("red");
+System.out.println("Métricas registradas: " + metricas.cantidadMetricas());
+  System.out.println("Métricas descartadas: " + metricas.getDescartadas());
+metricas.limpiar();
+System.out.println("Métricas después de limpiar: " + metricas.cantidadMetricas());
+System.out.println("¿Son el mismo objeto? " + (metricas == MetricsCollector.getInstance()));
+}
+}
