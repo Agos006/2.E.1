@@ -1,0 +1,74 @@
+import java.util.HashMap;
+class Cache {
+    private static Cache instance = null;
+    private HashMap<String, String> datos;
+    private Cache() {
+System.out.println("Creando la caché en memoria...");
+datos = new HashMap<>();
+}
+  public static synchronized Cache getInstance() {
+if (instance == null) {
+instance = new Cache();
+}
+return instance;
+}
+public synchronized void guardar(String clave, String valor) {
+  if (clave == null || clave.isEmpty()) {
+System.out.println("Error: la clave no puede estar vacía.");
+return;
+}
+if (datos.containsKey(clave)) {
+System.out.println("La clave ya existe. Use actualizar().");
+return;
+}
+datos.put(clave, valor);
+}
+public synchronized String obtener(String clave) {
+return datos.get(clave);
+}
+public synchronized boolean actualizar(String clave, String valor) {
+  if (!datos.containsKey(clave)) {
+System.out.println("La clave no existe. Use guardar().");
+return false;
+}
+datos.put(clave, valor);
+return true;
+}
+public synchronized boolean eliminar(String clave) {
+  if (!datos.containsKey(clave)) {
+return false;
+}
+datos.remove(clave);
+return true;
+}
+public synchronized boolean existe(String clave) {
+return datos.containsKey(clave);
+}
+
+public synchronized int cantidad() {
+return datos.size();
+}
+}
+
+public class Main {
+    public static void main(String[] args) {
+System.out.println("Inicio del programa (la caché todavía no existe)");
+
+Cache modulo1 = Cache.getInstance();
+modulo1.guardar("usuario1", "Ana - ana@mail.com");
+modulo1.guardar("usuario2", "Luis - luis@mail.com");
+
+Cache modulo2 = Cache.getInstance();
+System.out.println("Perfil usuario1: " + modulo2.obtener("usuario1"));
+modulo2.guardar("usuario1", "Otro perfil");
+
+modulo2.actualizar("usuario1", "Ana Pérez - ana@mail.com");
+System.out.println("Perfil actualizado: " + modulo1.obtener("usuario1"));
+
+modulo1.eliminar("usuario2");
+System.out.println("¿Existe usuario2? " + modulo2.existe("usuario2"));
+
+System.out.println("Elementos en caché: " + modulo1.cantidad());
+System.out.println("¿Son el mismo objeto? " + (modulo1 == modulo2));
+}
+}
