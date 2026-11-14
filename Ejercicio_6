@@ -1,36 +1,36 @@
-class Tema {
-private static Tema instance = null;
-  private String tema;
-  private String colorFondo;
-  private String colorTexto;
-private Tema() {
-  System.out.println("Creando el gestor de temas...");
-  tema = "CLARO";
-  aplicarColores();
-}
-public static synchronized Tema getInstance() {
-  if (instance == null) {
-instance = new Tema();
+class ControlTema {
+private static ControlTema instance = null;
+private String tema;
+private String colorFondo;
+private String colorTexto;
+private ControlTema() {
+System.out.println("Creando el gestor de temas...");
+tema = "CLARO";
+aplicarColores();
+    }
+public static synchronized ThemeManager getInstance() {
+if (instance == null) {
+instance = new ControlTema();
 }
 return instance;
 }
 private void aplicarColores() {
   if (tema.equals("CLARO")) {
-colorFondo = "#FFfr";
-colorTexto = "#0000";
+colorFondo = "#FFFfF";
+colorTexto = "#000000";
 } else {
-colorFondo = "#121212";
-colorTexto = "#FFFFFF";
+colorFondo = "#121221";
+colorTexto = "#FFFF";
 }
 }
- public synchronized boolean cambiarTema(String nuevoTema) {
+public synchronized boolean cambiarTema(String nuevoTema) {
   if (nuevoTema == null) {
-System.out.println("Tema no válido. Use CLARO o OSCURO.");
+System.out.println("Tema no válido. Use CLARO u OSCURO.");
 return false;
 }
 nuevoTema = nuevoTema.toUpperCase();
   if (!nuevoTema.equals("CLARO") && !nuevoTema.equals("OSCURO")) {
-System.out.println("Tema no válido. Use CLARO o OSCURO.");
+System.out.println("Tema no válido. Use CLARO u OSCURO.");
 return false;
 }
 tema = nuevoTema;
@@ -50,23 +50,23 @@ return tema;
 public synchronized String getColorFondo() {
 return colorFondo;
 }
-public synchronized String getColorTexto() {
+  public synchronized String getColorTexto() {
 return colorTexto;
 }
 }
 class Vista {
-  private String nombre;
- public Vista(String nombre) {
+private String nombre;
+
+public Vista(String nombre) {
 this.nombre = nombre;
 }
-public void mostrar() {
-ThemeManager gestor = Tema.getInstance();
+ public void mostrar() {
+ControlTema gestor = ControlTema.getInstance();
 System.out.println("Vista " + nombre + " -> tema: " + gestor.getTema()
-      + ", fondo: " + gestor.getColorFondo()
-      + ", texto: " + gestor.getColorTexto());
+    + ", fondo: " + gestor.getColorFondo()
+    + ", texto: " + gestor.getColorTexto());
 }
 }
-
 public class Main {
     public static void main(String[] args) {
 Vista inicio = new Vista("Inicio");
@@ -76,20 +76,20 @@ System.out.println("--- Tema inicial ---");
 inicio.mostrar();
 ajustes.mostrar();
 
-ThemeManager.getInstance().cambiarTema("OSCURO");
+ControlTema.getInstance().cambiarTema("OSCURO");
 System.out.println("--- Después de cambiar a OSCURO ---");
 inicio.mostrar();
 ajustes.mostrar();
 
-Tema.getInstance().cambiarTema("AZUL");
+ControlTema.getInstance().cambiarTema("AZUL");
 
-Tema.getInstance().alternarTema();
+ControlTema.getInstance().alternarTema();
 System.out.println("--- Después de alternar ---");
 inicio.mostrar();
 ajustes.mostrar();
 
-Tema a = ThemeManager.getInstance();
-Tema b = ThemeManager.getInstance();
+ControlTema a = ControlTema.getInstance();
+ControlTema b = ControlTema.getInstance();
 System.out.println("¿Son el mismo objeto? " + (a == b));
-    }
+}
 }
