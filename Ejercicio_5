@@ -1,0 +1,59 @@
+final class hardwareController {
+ private static hardwareController instance = null;
+private boolean disponible;
+private String estado;
+
+private hardwareController() {
+System.out.println("Conectando con el puerto serial...");
+disponible = true;
+estado = "EN ESPERA";
+}
+public static synchronized hardwareController getInstance() {
+  if (instance == null) {
+instance = new hardwareController();
+}
+return instance;
+}
+public synchronized boolean estaDisponible() {
+return disponible;
+}
+public synchronized boolean enviarComando(String comando) {
+  if (!disponible) {
+System.out.println("Rechazado: el dispositivo está ocupado.");
+return false;
+}
+  disponible = false;
+  estado = "EJECUTANDO " + comando;
+  System.out.println("Comando enviado: " + comando);
+  return true;
+}
+public synchronized void finalizarComando() {
+  disponible = true;
+  estado = "EN ESPERA";
+  System.out.println("Comando finalizado.");
+}
+public synchronized String leerEstado() {
+return estado;
+}
+}
+
+public class Main {
+public static void main(String[] args) {
+
+hardwareController modulo1 = hardwareController.getInstance();
+System.out.println("Estado inicial: " + modulo1.leerEstado());
+
+modulo1.enviarComando("MOVER_BRAZO");
+
+  hardwareController modulo2 = hardwareController.getInstance();
+  System.out.println("¿Disponible? " + modulo2.estaDisponible());
+  modulo2.enviarComando("ABRIR_PINZA");
+  System.out.println("Estado actual: " + modulo2.leerEstado());
+
+modulo1.finalizarComando();
+modulo2.enviarComando("ABRIR_PINZA");
+System.out.println("Estado actual: " + modulo1.leerEstado());
+
+System.out.println("¿Son el mismo objeto? " + (modulo1 == modulo2));
+}
+}
