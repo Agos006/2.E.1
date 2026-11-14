@@ -5,53 +5,46 @@ import java.util.HashMap;
 public class Main {
     public static void main(String[] args) throws Exception {
 
-        ConfigurationManager config = ConfigurationManager.getInstance();
-        config.cargar("config.properties");
+ConfigurationManager config = ConfigurationManager.getInstance();
+config.cargar("config.properties");
 
-        ConfigurationManager otraParte = ConfigurationManager.getInstance();
-        System.out.println("Usuario de la BD: " + otraParte.obtener("db.user"));
-        System.out.println("Timeout: " + otraParte.obtener("app.timeout"));
+ConfigurationManager otraParte = ConfigurationManager.getInstance();
+System.out.println("Usuario de la BD: " + otraParte.obtener("db.user"));
+System.out.println("Timeout: " + otraParte.obtener("app.timeout"));
 
-        System.out.println("¿Son el mismo objeto? " + (config == otraParte));
-    }
+System.out.println("¿Son el mismo objeto? " + (config == otraParte));
+}
 }
 ublic class ConfigurationManager {
 
-    private static ConfigurationManager instance = null;
+private static ConfigurationManager instance = null;
 
-    private HashMap<String, String> datos = new HashMap<>();
-    private boolean yaCargado = false;
-
-    private ConfigurationManager() {
-    }
-
-    public static ConfigurationManager getInstance() {
-        if (instance == null) {
-            instance = new ConfigurationManager();
-        }
-        return instance;
-    }
-
-    public void cargar(String rutaArchivo) throws IOException {
-        if (yaCargado) {
-            return;
-        }
-
-        BufferedReader lector = new BufferedReader(new FileReader(rutaArchivo));
-        String linea;
-
-        while ((linea = lector.readLine()) != null) {
-            String[] partes = linea.split("=", 2);
-            if (partes.length == 2) {
-                datos.put(partes[0].trim(), partes[1].trim());
-            }
-        }
-
-        lector.close();
-        yaCargado = true;
-    }
-
-    public String obtener(String clave) {
-        return datos.get(clave);
-    }
+private HashMap<String, String> datos = new HashMap<>();
+private boolean yaCargado = false;
+private ConfigurationManager() {
+}
+public static ConfigurationManager getInstance() {
+    if (instance == null) {
+instance = new ConfigurationManager();
+}
+return instance;
+}
+public void cargar(String rutaArchivo) throws IOException {
+    if (yaCargado) {
+return;
+}
+BufferedReader lector = new BufferedReader(new FileReader(rutaArchivo));
+String linea;
+    while ((linea = lector.readLine()) != null) {
+String partes = linea.split("=", 2);
+    if (partes.length == 2) {
+datos.put(partes[0].trim(), partes[1].trim());
+}
+}
+lector.close();
+yaCargado = true;
+}
+public String obtener(String clave) {
+return datos.get(clave);
+}
 }
