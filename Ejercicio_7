@@ -1,0 +1,97 @@
+import java.util.LinkedList;
+import java.util.Queue;
+
+class Documento {
+private String nombreArchivo;
+private String dueño;
+
+public Documento(String nombreArchivo, String dueño) {
+  this.nombreArchivo = nombreArchivo;
+  this.dueño = dueño;
+}
+ public String getNombreArchivo() {
+return nombreArchivo;
+}
+public String getDueño() {
+  return dueño;
+}
+}
+
+class PrintQueue {
+private static PrintQueue instance = null;
+private Queue<Documento> cola;
+
+private PrintQueue() {
+System.out.println("Se está ceando la cola de impresión...");
+cola = new LinkedList<>();
+}
+public static synchronized PrintQueue getInstance() {
+  if (instance == null) {
+instance = new PrintQueue();
+}
+return instance;
+}
+public synchronized void encolar(String nombreArchivo, String dueño) {
+  cola.add(new Documento(nombreArchivo, dueño));
+}
+public synchronized void imprimirSiguiente() {
+Documento doc = cola.poll();
+  if (doc == null) {
+System.out.println("No hay documentos pendientes.");
+return;
+}
+System.out.println("Imprimiendo " + doc.getNombreArchivo()
+                + " (dueño: " + doc.getDueño() + ")");
+}
+public synchronized void imprimirTodo() {
+while (!cola.isEmpty()) {
+imprimirSiguiente();
+}
+}
+public synchronized int cantidadPendientes() {
+return cola.size();
+}
+}
+class Terminal extends Thread {
+
+private String nombre;
+private int cantidad;
+
+public Terminal(String nombre, int cantidad) {
+this.nombre = nombre;
+this.cantidad = cantidad;
+}
+public void run() {
+  for (int i = 1; i <= cantidad; i++) {
+PrintQueue.getInstance().encolar("doc" + i + "_" + nombre + ".txt", nombre);
+}
+}
+}
+
+public class Main {
+public static void main(String[] args) throws InterruptedException {
+PrintQueue cola = PrintQueue.getInstance();
+cola.encolar("informe.pdf", "Ana");
+cola.encolar("foto.png", "Luis");
+cola.encolar("contrato.docx", "Marta");
+System.out.println("Pendientes: " + cola.cantidadPendientes());
+
+cola.imprimirSiguiente();
+PrintQueue otra = PrintQueue.getInstance();
+otra.imprimirSiguiente();
+System.out.println("Pendientes: " + otra.cantidadPendientes());
+
+cola.imprimirTodo();
+cola.imprimirSiguiente();
+
+Terminal t1 = new Terminal("T1", 100);
+Terminal t2 = new Terminal("T2", 100);
+t1.start();
+  t2.start();
+    t1.join();
+      t2.join();
+System.out.println("Documentos en cola tras dos terminales concurrentes: "
+                + cola.cantidadPendientes());
+System.out.println("¿Son el mismo objeto? " + (cola == otra));
+}
+}
