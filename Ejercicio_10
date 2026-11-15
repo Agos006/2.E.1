@@ -1,0 +1,144 @@
+final class EventoAuditoria {
+private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final int numero;
+    private final String sesion;
+    private final String operador;
+    private final String accion;
+    private final LocalDateTime marca;
+
+public EventoAuditoria(int numero, String sesion, String operador, String accion, LocalDateTime marca) {
+        this.numero = numero;
+        this.sesion = sesion;
+        this.operador = operador;
+        this.accion = accion;
+        this.marca = marca;
+}
+public int getNumero() {
+return numero;
+}
+public LocalDateTime getMarca() {
+return marca;
+}
+public String toString() {
+    return "#" + numero + " [" + marca.format(FORMATO) + "] sesión=" + sesion
+    + " operador=" + operador + " acción=" + accion;
+}
+}
+final class Auditor {
+ private static final Auditor instancia = new Auditor();
+private final List<EventoAuditoria> traza = new ArrayList<>();
+private final ReentrantReadWriteLock cerrojo = new ReentrantReadWriteLock();
+
+private Auditor() {
+  if (instancia != null) {
+throw new IllegalStateException("Ya existe una instancia de Auditor.");
+}
+}
+public static Auditor getInstance() {
+  return instancia;
+}
+public Object clone() throws CloneNotSupportedException {
+throw new CloneNotSupportedException("No se puede clonar el auditor.");
+}
+public void registrar(String sesion, String operador, String accion) {
+cerrojo.writeLock().lock();
+try {
+  int numero = traza.size() + 1;
+  traza.add(new EventoAuditoria(numero, sesion, operador, accion, LocalDateTime.now()));
+} finally {
+cerrojo.writeLock().unlock();
+}
+}
+public int cantidadRegistros() {
+cerrojo.readLock().lock();
+try {
+return traza.size();
+} finally {
+  cerrojo.readLock().unlock();
+}
+}
+public List<EventoAuditoria> obtenerTraza() {
+  cerrojo.readLock().lock();
+try {
+return List.copyOf(traza);
+} finally {
+  cerrojo.readLock().unlock();
+}
+}
+public boolean verificarOrden() {
+cerrojo.readLock().lock();
+try {
+for (int i = 0; i < traza.size(); i++) {
+EventoAuditoria actual = traza.get(i);
+  if (actual.getNumero() != i + 1) {
+return false;
+}
+if (i > 0 && actual.getMarca().isBefore(traza.get(i - 1).getMarca())) {
+return false;
+}
+}
+return true;
+} finally {
+   cerrojo.readLock().unlock();
+}
+}
+}
+
+class Operador extends Thread {
+
+private String nombre;
+private int cantidad;
+
+public Operador(String nombre, int cantidad) {
+this.nombre = nombre;
+this.cantidad = cantidad;
+ }
+public void run() {
+for (int i = 1; i <= cantidad; i++) {
+Auditor.getInstance().registrar("S-" + nombre, nombre, "Acción " + i);
+}
+}
+}
+public class Main {
+public static void main(String[] args) throws InterruptedException {
+
+Auditor auditor = Auditor.getInstance();
+auditor.registrar("S-100", "Agos", "Transferencia de $5000");
+auditor.registrar("S-101", "Luis", "Cambio de privilegios a ADMIN");
+auditor.registrar("S-100", "Agos", "Cierre de sesión");
+
+System.out.println("Registros: " + auditor.cantidadRegistros());
+for (EventoAuditoria evento : auditor.obtenerTraza()) {
+System.out.println(evento);
+}
+List<EventoAuditoria> copia = auditor.obtenerTraza();
+try {
+copia.clear();
+} catch (UnsupportedOperationException e) {
+System.out.println("Intento de modificar la traza bloqueado.");
+}
+try {
+auditor.clone();
+} catch (CloneNotSupportedException e) {
+System.out.println("Intento de clonar bloqueado: " + e.getMessage());
+}
+try {
+Constructor<Auditor> constructor = Auditor.class.getDeclaredConstructor();
+constructor.setAccessible(true);
+constructor.newInstance();
+} catch (Exception e) {
+System.out.println("Intento por reflexión bloqueado: " + e.getCause().getMessage());
+}
+
+Operador operador1 = new Operador("Guada", 100);
+Operador operador2 = new Operador("Maribella", 100);
+operador1.start();
+operador2.start();
+operador1.join();
+operador2.join();
+
+System.out.println("Registros totales: " + auditor.cantidadRegistros());
+System.out.println("¿El orden cronológico es correcto? " + auditor.verificarOrden());
+System.out.println("¿Es el mismo objeto? " + (auditor == Auditor.getInstance()));
+}
+}
